@@ -1,0 +1,45 @@
+schema_version: 1
+claims:
+  - claim_id: AERIAL-ARCH-001
+    question: Does the Aerial NR gNB stack expose both GPU-accelerated PHY and MAC components?
+    statement: NVIDIA's Aerial 26.1 documentation identifies Aerial cuPHY as a CUDA-accelerated inline PHY and Aerial cuMAC as a CUDA-accelerated MAC scheduler.
+    conclusion_type: confirmed_fact
+    evidence_level: E1
+    projects:
+      - aerial
+    limitations: This confirms the documented component boundary and positioning, not source completeness, runtime performance, or standards conformance.
+    status: confirmed
+    official_url: https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/index.html
+    document_version: "26.1"
+    section: "What's New in 25-3; cuPHY and cuMAC documentation entries"
+    retrieved_at: 2026-07-20
+
+  - claim_id: OAI-MAINLINE-001
+    question: Which current upstream should represent OpenAirInterface in this comparison?
+    statement: The current OAI RAN project is published within the Duranta project, and the frozen upstream README identifies the implementation as Duranta OpenAirInterface RAN.
+    conclusion_type: confirmed_fact
+    evidence_level: E1
+    projects:
+      - oai
+    limitations: The official project page and frozen README establish project identity; they do not by themselves prove that every historical OAI mirror is byte-for-byte synchronized.
+    status: confirmed
+    official_url: https://openairinterface.org/ran/
+    supporting_urls:
+      - https://github.com/duranta-project/openairinterface5g/blob/31ffb21a8204ae9706a88eb08606a80fc8eafb3e/README.md
+    document_version: "31ffb21a8204ae9706a88eb08606a80fc8eafb3e"
+    section: "OAI RAN; Duranta - OpenAirInterface"
+    retrieved_at: 2026-07-20
+
+  - claim_id: OCUDU-SUCCESSOR-001
+    question: Which maintained upstream should represent srsRAN Project in this comparison?
+    statement: OCUDU's official migration guide identifies OCUDU as the successor to srsRAN Project and records the shared fork point as commit 7d6183f.
+    conclusion_type: confirmed_fact
+    evidence_level: E1
+    projects:
+      - ocudu
+    limitations: Successor status does not imply that post-fork OCUDU behavior or APIs remain identical to the earlier srsRAN Project.
+    status: confirmed
+    official_url: https://docs.ocudu.org/migration/
+    document_version: docs-8b5041e9
+    section: Migrating from srsRAN to OCUDU
+    retrieved_at: 2026-07-20
