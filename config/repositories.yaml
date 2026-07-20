@@ -1,0 +1,38 @@
+schema_version: 1
+repositories:
+  aerial:
+    name: NVIDIA Aerial CUDA-Accelerated RAN
+    url: https://github.com/NVIDIA/aerial-cuda-accelerated-ran.git
+    role: primary
+    scope: GPU-accelerated NR gNB L1, MAC scheduler, fronthaul, and validation tools
+    ref_policy: latest_release_then_commit
+    license_family: Apache-2.0
+  oai:
+    name: Duranta OpenAirInterface
+    url: https://github.com/duranta-project/openairinterface5g.git
+    role: primary
+    scope: NR gNB and CU/DU implementation; UE code excluded from this study
+    ref_policy: develop_then_commit
+    license_family: CSSL-1.0 with per-file exceptions
+  ocudu:
+    name: OCUDU
+    url: https://gitlab.com/ocudu/ocudu.git
+    role: primary
+    scope: O-RAN-aligned NR CU/DU and L1/L2/L3 implementation
+    ref_policy: latest_release_then_commit
+    license_family: BSD-3-Clause Open MPI variant
+  oran_du_l2:
+    name: O-RAN SC O-DU High
+    url: https://github.com/o-ran-sc/o-du-l2.git
+    role: reference
+    scope: NR MAC, RLC, DU application, F1, O1, and FAPI integration reference
+    ref_policy: master_then_commit
+    license_family: verify_per_repository
+  oran_du_phy:
+    name: O-RAN SC O-DU Low
+    url: https://github.com/o-ran-sc/o-du-phy.git
+    role: reference
+    scope: NR lower-PHY and FAPI translator reference
+    ref_policy: master_then_commit
+    license_family: verify_per_repository
+

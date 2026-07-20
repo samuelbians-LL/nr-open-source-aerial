@@ -1,0 +1,65 @@
+schema_version: 1
+evidence_levels:
+  E0:
+    name: project_claim
+    requires:
+      - official_url
+      - retrieved_at
+  E1:
+    name: architecture_evidence
+    requires:
+      - official_url
+      - document_version
+      - section
+      - retrieved_at
+  E2:
+    name: source_evidence
+    requires:
+      - repository
+      - commit
+      - paths
+      - symbols
+  E3:
+    name: repository_validation
+    requires:
+      - repository
+      - commit
+      - test_or_benchmark_path
+      - configuration
+      - result_provenance
+  E4:
+    name: independent_reproduction
+    requires:
+      - repository
+      - commit
+      - environment_manifest
+      - configuration
+      - raw_log_paths
+      - analysis_script
+      - result_checksum
+conclusion_types:
+  confirmed_fact:
+    minimum_level: E1
+  measured_fact:
+    minimum_level: E4
+  inference:
+    minimum_level: E1
+  vendor_claim:
+    minimum_level: E0
+  open_question:
+    minimum_level: E0
+required_claim_fields:
+  - claim_id
+  - question
+  - statement
+  - conclusion_type
+  - evidence_level
+  - projects
+  - limitations
+  - status
+allowed_statuses:
+  - confirmed
+  - partially_confirmed
+  - unverified
+  - contradicted
+

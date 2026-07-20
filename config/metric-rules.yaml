@@ -1,0 +1,66 @@
+schema_version: 1
+required_context_fields:
+  - software_project
+  - software_version
+  - commit
+  - hardware_system
+  - cpu
+  - accelerator
+  - nic
+  - bandwidth_mhz
+  - scs_khz
+  - duplex
+  - tdd_pattern
+  - tx_antennas
+  - rx_antennas
+  - layers
+  - cells
+  - ues
+  - mcs_or_load
+  - test_boundary
+  - warmup_seconds
+  - duration_seconds
+  - repetitions
+  - latency_statistic
+  - deadline_us
+  - evidence_kind
+evidence_kinds:
+  - vendor_claim
+  - repository_benchmark
+  - derived
+  - measured
+test_boundaries:
+  - kernel
+  - algorithm
+  - channel_pipeline
+  - layer1
+  - distributed_unit
+  - end_to_end
+latency_statistics:
+  - mean
+  - p50
+  - p95
+  - p99
+  - p99_9
+  - maximum
+comparison_group_fields:
+  - bandwidth_mhz
+  - scs_khz
+  - duplex
+  - tdd_pattern
+  - tx_antennas
+  - rx_antennas
+  - layers
+  - cells
+  - ues
+  - mcs_or_load
+  - test_boundary
+invalid_comparisons:
+  - different_test_boundaries
+  - different_antenna_configurations
+  - different_tdd_patterns
+  - different_mcs_or_load_without_normalization
+  - peak_cells_vs_average_cells
+  - mean_latency_vs_tail_latency
+  - vendor_claim_vs_measured_without_explicit_label
+

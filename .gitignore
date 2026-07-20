@@ -1,0 +1,9 @@
+third_party/
+data/documents/files/
+data/performance/raw/
+*.pcap
+*.nsys-rep
+*.ncu-rep
+__pycache__/
+.pytest_cache/
+.venv/
