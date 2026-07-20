@@ -43,3 +43,70 @@ claims:
     document_version: docs-8b5041e9
     section: Migrating from srsRAN to OCUDU
     retrieved_at: 2026-07-20
+
+  - claim_id: AERIAL-ARCH-002
+    question: Where is the CPU/GPU boundary visible in the frozen Aerial source?
+    statement: The frozen source separates CPU-side cuPHY/FH orchestration from CUDA PHY and cuMAC kernels in distinct C++ and CUDA translation units.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Static source structure proves implementation placement, but not runtime residency, deadline closure, throughput, or the absence of copies.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY-CP/aerial-fh-driver/lib/fronthaul.cpp
+      - cuPHY-CP/cuphydriver/src/downlink/phypdsch_aggr.cpp
+      - cuPHY/src/cuphy/crc/crc.cu
+      - cuMAC/src/4T4R/multiCellScheduler.cu
+    symbols:
+      - Fronthaul::eal_init
+      - PhyPdschAggr::createPhyObj
+      - crcDownlinkPdschTransportBlockKernel
+      - multiCellSchedulerKernel_svdMmseIrc
+
+  - claim_id: OAI-ARCH-001
+    question: How are the MAC scheduler and NR L1 connected in the frozen OAI gNB path?
+    statement: The frozen OAI source contains a per-slot MAC scheduler that produces NR scheduling requests consumed by the gNB L1 transmit and receive procedures in the same repository.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This establishes the in-repository path only; optional nFAPI, hardware acceleration, and alternative deployment splits require separate claims.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler.c
+      - executables/nr-gnb.c
+      - openair1/SCHED_NR/phy_procedures_nr_gNB.c
+    symbols:
+      - gNB_dlsch_ulsch_scheduler
+      - NR_slot_indication
+      - phy_procedures_gNB_TX
+      - phy_procedures_gNB_uespec_RX
+
+  - claim_id: OCUDU-ARCH-001
+    question: Is the MAC-to-PHY boundary explicit in the frozen OCUDU source?
+    statement: The frozen OCUDU source separates DU-high, DU-low upper PHY, and bidirectional FAPI fastpath translation into distinct C++ components.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: Static component separation does not prove independent deployment, real-time performance, or a particular lower-PHY/RU integration.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/du/du_high/du_high_impl.cpp
+      - lib/du/du_low/du_low_impl.cpp
+      - lib/fapi_adaptor/mac/p7/mac_to_fapi_fastpath_translator.cpp
+      - lib/fapi_adaptor/phy/p7/fapi_to_phy_fastpath_translator.cpp
+      - lib/phy/upper/upper_phy_impl.cpp
+    symbols:
+      - du_high_impl::get_slot_handler
+      - du_low_impl::get_upper_phy
+      - mac_to_fapi_fastpath_translator::on_new_downlink_scheduler_results
+      - fapi_to_phy_fastpath_translator::send_dl_tti_request
+      - upper_phy_impl::get_operation_controller

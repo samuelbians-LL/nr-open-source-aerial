@@ -1,12 +1,15 @@
 project,title,version,url,published_at,retrieved_at,local_path,sha256,scope,access_status
 aerial,Aerial CUDA-Accelerated RAN documentation,26.1,https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/index.html,2026-06-15,2026-07-20,,,overall SDK and release baseline,remote_web
 aerial,Aerial cuPHY Components,24.3,https://docs.nvidia.com/aerial/cuda-accelerated-ran/24-3/aerial_cubb/cubb_developer_guide/cubb_components.html,,2026-07-20,,,PHY pipelines CUDA Graph memory and optimization,remote_web
+aerial,Aerial cuPHY Components,26.1,https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/cubb/cuphy_developer_guide/cuphy_components.html,2026-06-15,2026-07-20,,,current CPU GPU component boundaries PHY pipelines and FH data paths,remote_web
 aerial,Aerial cuMAC,25.3,https://docs.nvidia.com/aerial/cuda-accelerated-ran/25-3/cubb/cumac/index.html,,2026-07-20,,,GPU MAC scheduler architecture and algorithms,remote_web
 aerial,pyAerial Overview,26.1,https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/pyaerial/overview.html,2026-06-15,2026-07-20,,,bit-accurate Python and real-time CUDA kernel path,remote_web
 aerial,Aerial Limitations,26.1,https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/release_notes/limitations.html,2026-06-15,2026-07-20,,,known runtime and configuration limitations,remote_web
 oai,Duranta OpenAirInterface README,31ffb21a8204ae9706a88eb08606a80fc8eafb3e,https://github.com/duranta-project/openairinterface5g/blob/31ffb21a8204ae9706a88eb08606a80fc8eafb3e/README.md,2026-07-17,2026-07-20,,,project scope structure and license,github_connector
 oai,OpenAirInterface NR Feature Set,31ffb21a8204ae9706a88eb08606a80fc8eafb3e,https://github.com/duranta-project/openairinterface5g/blob/31ffb21a8204ae9706a88eb08606a80fc8eafb3e/doc/FEATURE_SET.md,2026-07-17,2026-07-20,,,NR gNB feature baseline,github_connector
+oai,OpenAirInterface RAN project page,retrieved-2026-07-20,https://openairinterface.org/ran/,,2026-07-20,,,current Duranta project identity and gNB scope,remote_web
 ocudu,OCUDU Releases,v26.04,https://docs.ocudu.org/releases/,2026-04-01,2026-07-20,,,current features roadmap and release cycle,remote_web
 ocudu,OCUDU Architecture Overview,docs-8b5041e9,https://docs.ocudu.org/dev_guide/,,2026-07-20,,,CU DU DU-high DU-low and developer architecture,remote_web
 ocudu,OCUDU Design Principles,docs-8b5041e9,https://docs.ocudu.org/dev_guide/architecture_guide/principles/,,2026-07-20,,,execution-independent software architecture principles,remote_web
+ocudu,Migrating from srsRAN to OCUDU,docs-8b5041e9,https://docs.ocudu.org/migration/,,2026-07-20,,,successor relationship fork point and migration scope,remote_web
 oran_du_phy,O-RAN SC O-DU PHY FAPI Translator,K,https://docs.o-ran-sc.org/projects/o-ran-sc-o-du-phy/en/latest/fapi_5g_tm_overview.html,2025-01-14,2026-07-20,,,FAPI translator WLS and Intel L1 boundary,remote_web
