@@ -7,6 +7,12 @@ repositories:
     scope: GPU-accelerated NR gNB L1, MAC scheduler, fronthaul, and validation tools
     ref_policy: latest_release_then_commit
     license_family: Apache-2.0
+    default_branch: main
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    frozen_at: 2026-07-20
+    access_method: github_connector
+    local_checkout: false
+    lfs_objects_available: false
   oai:
     name: Duranta OpenAirInterface
     url: https://github.com/duranta-project/openairinterface5g.git
@@ -14,6 +20,11 @@ repositories:
     scope: NR gNB and CU/DU implementation; UE code excluded from this study
     ref_policy: develop_then_commit
     license_family: CSSL-1.0 with per-file exceptions
+    default_branch: develop
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    frozen_at: 2026-07-20
+    access_method: github_connector
+    local_checkout: false
   ocudu:
     name: OCUDU
     url: https://gitlab.com/ocudu/ocudu.git
@@ -21,6 +32,12 @@ repositories:
     scope: O-RAN-aligned NR CU/DU and L1/L2/L3 implementation
     ref_policy: latest_release_then_commit
     license_family: BSD-3-Clause Open MPI variant
+    default_branch: main
+    version_label: v26.04
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    frozen_at: 2026-07-20
+    access_method: gitlab_api_and_web
+    local_checkout: false
   oran_du_l2:
     name: O-RAN SC O-DU High
     url: https://github.com/o-ran-sc/o-du-l2.git
@@ -28,6 +45,11 @@ repositories:
     scope: NR MAC, RLC, DU application, F1, O1, and FAPI integration reference
     ref_policy: master_then_commit
     license_family: verify_per_repository
+    default_branch: master
+    commit: 04feb1fd9f815d4a87fb502a961cdbfa5209c7f4
+    frozen_at: 2026-07-20
+    access_method: github_connector
+    local_checkout: false
   oran_du_phy:
     name: O-RAN SC O-DU Low
     url: https://github.com/o-ran-sc/o-du-phy.git
@@ -35,4 +57,9 @@ repositories:
     scope: NR lower-PHY and FAPI translator reference
     ref_policy: master_then_commit
     license_family: verify_per_repository
+    default_branch: master
+    commit: 6ef1d2b70db585e351b9cd35c6054c1b249a7465
+    frozen_at: 2026-07-20
+    access_method: github_connector
+    local_checkout: false
 
