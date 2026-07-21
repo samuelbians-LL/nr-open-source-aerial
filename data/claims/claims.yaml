@@ -110,3 +110,149 @@ claims:
       - mac_to_fapi_fastpath_translator::on_new_downlink_scheduler_results
       - fapi_to_phy_fastpath_translator::send_dl_tti_request
       - upper_phy_impl::get_operation_controller
+
+  - claim_id: AERIAL-PUSCH-001
+    question: How does the frozen Aerial source orchestrate the NR PUSCH receive pipeline?
+    statement: The frozen Aerial source implements PUSCH as a GPU-input receive pipeline with reusable CUDA graph executables, phase-specific CUDA streams and completion events, plus explicit methods for selected output transfers to CPU.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Static source proves the implemented orchestration and transfer boundaries, not that every deployment is zero-copy or that any real-time deadline is met.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY/src/cuphy/cuphy_api.h
+      - cuPHY/src/cuphy_channels/pusch_rx.cpp
+      - cuPHY/src/cuphy_channels/pusch_rx.hpp
+      - cuPHY-CP/cuphydriver/src/uplink/phypusch_aggr.cpp
+    symbols:
+      - cuphySetupPuschRx
+      - cuphyRunPuschRx
+      - PuschRx::setupCmnPhase1
+      - PuschRx::updateFullSlotGraph
+      - PuschRx::copyEarlyHarqOutputToCPU
+      - PuschRx::copyOutputToCPU
+
+  - claim_id: OAI-PUSCH-001
+    question: What execution model is used by the selected frozen OAI PUSCH path?
+    statement: The selected frozen OAI gNB PUSCH path uses C procedures, fixed-point complex data, SIMDe vector operations and CPU thread-pool jobs for demodulation and ULSCH decoding.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This describes the traced main source path and does not establish the absence of optional accelerator integrations elsewhere in the repository.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair1/SCHED_NR/phy_procedures_nr_gNB.c
+      - openair1/PHY/NR_TRANSPORT/nr_ulsch.c
+      - openair1/PHY/NR_TRANSPORT/nr_ulsch_demodulation.c
+      - openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c
+    symbols:
+      - nr_ulsch_procedures
+      - nr_fill_ulsch
+      - nr_rx_pusch_tp
+      - nr_ulsch_decoding
+
+  - claim_id: OCUDU-PUSCH-001
+    question: How does the selected frozen OCUDU path schedule and return PUSCH processing?
+    statement: The frozen OCUDU path stores FAPI PUSCH requests in a slot repository, processes them from received-symbol callbacks, and uses processor notifiers and optional codeblock executor tasks to return data, CRC and UCI results.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: The claim covers the traced software upper-PHY path and does not characterize optional hardware decoder implementations or a lower-PHY backend.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/fapi_adaptor/phy/p7/fapi_to_phy_fastpath_translator.cpp
+      - lib/phy/upper/uplink_processor_impl.cpp
+      - lib/phy/upper/channel_processors/pusch/pusch_processor_impl.cpp
+      - lib/phy/upper/channel_processors/pusch/pusch_decoder_impl.cpp
+      - lib/fapi_adaptor/phy/p7/phy_to_fapi_results_event_fastpath_translator.cpp
+    symbols:
+      - fapi_to_phy_fastpath_translator::send_ul_tti_request
+      - uplink_processor_impl::process_symbol_pdus
+      - uplink_processor_impl::process_pusch
+      - pusch_processor_impl::process
+      - pusch_decoder_impl::fork_codeblock_task
+      - phy_to_fapi_results_event_fastpath_translator::on_new_pusch_results_data
+
+  - claim_id: AERIAL-PDSCH-001
+    question: Which CUDA-specific orchestration and fusion mechanisms are implemented in the frozen Aerial PDSCH path?
+    statement: The frozen Aerial source implements PDSCH create, setup and run stages with CUDA graph execution, separate LDPC streams and events, CPU or GPU transport-block inputs, and CUDA kernels spanning CRC, LDPC, fused rate-matching-to-modulation and DMRS generation.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Source presence proves implementation structure, not launch counts for a particular configuration, achieved memory-traffic reduction, throughput, latency or deadline closure.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY/src/cuphy/cuphy_api.h
+      - cuPHY/src/cuphy_channels/pdsch_tx.cpp
+      - cuPHY/src/cuphy_channels/pdsch_tx.hpp
+      - cuPHY-CP/cuphydriver/src/downlink/phypdsch_aggr.cpp
+      - cuPHY/src/cuphy/crc/crc.cu
+      - cuPHY/src/cuphy/error_correction/ldpc_encode.cu
+      - cuPHY/src/cuphy/dl_rate_matching/dl_rate_matching.cu
+      - cuPHY/src/cuphy/pdsch_dmrs/pdsch_dmrs.cu
+    symbols:
+      - cuphyCreatePdschTx
+      - cuphySetupPdschTx
+      - cuphyRunPdschTx
+      - PhyPdschAggr::setup
+      - PhyPdschAggr::run
+      - fused_dl_rm_and_modulation
+      - fused_dmrs
+
+  - claim_id: OAI-PDSCH-001
+    question: What execution and data model is used by the selected frozen OAI PDSCH path?
+    statement: The selected frozen OAI PDSCH path carries MAC scheduling output into gNB TX procedures and implements host-buffer CRC, segmentation and LDPC coding followed by fixed-point and SIMDe-assisted PDSCH generation.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This is a source-level characterization of the traced main path and is not a performance comparison or an exhaustive exclusion of optional acceleration backends.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler.c
+      - openair1/SCHED_NR/phy_procedures_nr_gNB.c
+      - openair1/PHY/NR_TRANSPORT/nr_dlsch_coding.c
+      - openair1/PHY/NR_TRANSPORT/nr_dlsch.c
+    symbols:
+      - gNB_dlsch_ulsch_scheduler
+      - phy_procedures_gNB_TX
+      - nr_dlsch_encoding
+      - nr_generate_pdsch
+
+  - claim_id: OCUDU-PDSCH-001
+    question: How does the selected frozen OCUDU path execute PDSCH processing?
+    statement: The frozen OCUDU path translates FAPI downlink requests into a slot-scoped downlink processor, defers PDSCH work to a task executor, and uses separate encoder and modulator components to write a resource grid before notifying completion.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: This describes the traced software processor path and does not characterize optional hardware encoder implementations or lower-PHY processing.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/fapi_adaptor/phy/p7/fapi_to_phy_fastpath_translator.cpp
+      - lib/phy/upper/downlink_processor_multi_executor_impl.cpp
+      - lib/phy/upper/channel_processors/pdsch/pdsch_processor_impl.cpp
+      - lib/phy/upper/channel_processors/pdsch/pdsch_encoder_impl.cpp
+      - lib/phy/upper/channel_processors/pdsch/pdsch_modulator_impl.cpp
+    symbols:
+      - fapi_to_phy_fastpath_translator::send_dl_tti_request
+      - downlink_processor_multi_executor_impl::process_pdsch
+      - pdsch_processor_impl::process
+      - pdsch_encoder_impl::encode
+      - pdsch_modulator_impl::modulate
