@@ -256,3 +256,134 @@ claims:
       - pdsch_processor_impl::process
       - pdsch_encoder_impl::encode
       - pdsch_modulator_impl::modulate
+
+  - claim_id: AERIAL-CODING-001
+    question: Which CUDA-specific implementation choices are present in Aerial LDPC and Polar coding?
+    statement: The frozen Aerial source contains CUDA LDPC kernels specialized by base graph and lifting size, FP32 and FP16 decoder dispatch, register/shared/global check-to-variable cache variants, batched transport-block encoding, and CUDA Polar encode and decode kernels.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: These source mechanisms do not establish codec throughput, latency, numerical equivalence across formats, or an advantage over CPU SIMD without controlled measurements.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY/src/cuphy/error_correction/ldpc_encode.cu
+      - cuPHY/src/cuphy/error_correction/ldpc2_global.cu
+      - cuPHY/src/cuphy/error_correction/ldpc2_kernel.cuh
+      - cuPHY/src/cuphy/polar_decoder/polar_decoder.cu
+      - cuPHY/src/cuphy/polar_encoder/polar_encoder.cu
+    symbols:
+      - ldpc::ldpc_encode_in_bit_kernel
+      - ldpc::decode_ldpc2_global_index
+      - ldpc2_kernel
+      - polarDecoderKernel
+      - encodeRateMatchKernel
+
+  - claim_id: OAI-CODING-001
+    question: Which optimized CPU coding paths are present in the frozen OAI source?
+    statement: The frozen OAI source implements NR LDPC check-node and bit-node processing selected for 128-bit, AVX2 and AVX-512 CPU paths, includes vectorized rate matching, and provides host C Polar encoder and SCL decoder implementations.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: Source variants do not identify which ISA is active in a particular build or establish comparative runtime performance.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
+      - openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nr_rate_matching.c
+      - openair1/PHY/CODING/nrPolar_tools/nr_polar_decoder.c
+      - openair1/PHY/CODING/nrPolar_tools/nr_polar_encoder.c
+    symbols:
+      - nrLDPC_decoder_core
+      - nr_rate_matching_ldpc
+      - polar_decoder
+      - polar_encoder
+
+  - claim_id: OCUDU-CODING-001
+    question: Which optimized CPU coding paths are present in the frozen OCUDU source?
+    statement: The frozen OCUDU source provides generic, AVX2, AVX-512 and NEON LDPC component variants, AVX-512 rate-dematching and soft-combining code, an explicit syndrome early-stop option, and componentized Polar decoding.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: The available variant depends on target architecture and factory configuration; this claim does not cover optional hardware-accelerated decoder classes.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/phy/upper/channel_coding/ldpc/ldpc_decoder_impl.cpp
+      - lib/phy/upper/channel_coding/ldpc/ldpc_decoder_avx512.cpp
+      - lib/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher_avx512_impl.cpp
+      - lib/phy/upper/channel_coding/polar/polar_decoder_impl.cpp
+    symbols:
+      - ldpc_decoder_impl::check_syndrome
+      - ldpc_decoder_avx512::compute_var_to_check_msgs
+      - ldpc_rate_dematcher_avx512_impl::combine_softbits
+      - polar_decoder_impl::decode
+
+  - claim_id: AERIAL-MIMO-001
+    question: How is the frozen Aerial 64T64R SRS-to-beamforming path implemented?
+    statement: The frozen Aerial source links GPU SRS channel-estimate tensors to CUDA MU-MIMO UE-grouping kernels and a custom CUDA RZF beamforming kernel that uses shared-memory channel, Gram, inverse and weight arrays indexed by base-station antenna and group layer.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Static source establishes the implemented data structures and algorithms, but not zero-copy in every configuration, numerical stability, supported deployment limits, throughput or slot-deadline closure.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY-CP/cuphydriver/src/uplink/physrs_aggr.cpp
+      - cuPHY/src/cuphy/srs_chEst/srs_chEst.cu
+      - cuMAC/src/64T64R/multiCellMuUeGrp.cu
+      - cuMAC/src/64T64R/multiCellBeamform.cu
+    symbols:
+      - PhySrsAggr::PhySrsAggr
+      - srsChEstKernelInner
+      - multiCellMuUeGrpKernel_dl_semiStatic
+      - multiCellMuUeGrpKernel_dl_dynPerTTI
+      - multiCellBeamformKernel_rzf_dl
+
+  - claim_id: OAI-MIMO-001
+    question: Which SRS and beamforming components are visible in the selected frozen OAI path?
+    statement: The frozen OAI source includes CPU-side SRS request and signal extraction, SRS-related scheduling and rank calculations, and a beam-precoding routine that applies supplied beam weights to downlink frequency-domain data.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This claim does not establish an integrated 64T64R MU-MIMO grouping and RZF pipeline, nor does it assert that no alternative OAI integration exists.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair1/PHY/NR_TRANSPORT/srs_rx.c
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_srs.c
+      - openair1/PHY/MODULATION/nr_beamforming.c
+    symbols:
+      - nr_fill_srs
+      - nr_get_srs_signal
+      - matrix_rank_128bits
+      - nr_beam_precoding
+
+  - claim_id: OCUDU-MIMO-001
+    question: Which SRS channel-matrix and precoding components are visible in the selected frozen OCUDU path?
+    statement: The frozen OCUDU source estimates a typed wideband SRS channel matrix from a resource grid and passes configured precoding through the PDSCH modulator to the resource-grid mapper.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: The traced files do not establish an equivalent integrated 64T64R GPU MU-MIMO grouping and RZF pipeline, and they do not exhaust all scheduler or deployment-specific precoding behavior.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/phy/upper/signal_processors/srs/srs_estimator_generic_impl.cpp
+      - lib/phy/upper/channel_processors/pdsch/pdsch_modulator_impl.cpp
+    symbols:
+      - srs_estimator_generic_impl::estimate
+      - srs_channel_matrix
+      - pdsch_modulator_impl::map
