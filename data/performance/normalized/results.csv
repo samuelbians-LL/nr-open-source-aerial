@@ -1,0 +1,1 @@
+record_id,project,software_version,hardware_id,bandwidth_mhz,scs_khz,duplex,tdd_pattern,tx_antennas,rx_antennas,layers,ues,mcs_or_load,test_boundary,latency_statistic,latency_value,latency_unit,throughput_value,throughput_unit,deadline_misses,repetitions,warmup_seconds,duration_seconds,raw_source,latency_us,throughput_mbps,comparison_group
