@@ -480,3 +480,108 @@ claims:
       - scheduler_time_qos::compute_ue_ul_priorities
       - ue_cell_grid_allocator::allocate_dl_grant
       - olla_algorithm::update
+
+  - claim_id: AERIAL-FH-001
+    question: Does the frozen Aerial source implement a NIC-to-GPU fronthaul receive path?
+    statement: The frozen Aerial source registers CUDA external memory with DPDK, maps it for NIC DMA, receives packet metadata through DOCA GPUNetIO, and runs a CUDA order kernel that validates, orders and decompresses uplink O-RAN packets into PHY input buffers.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: The implementation also contains host-pinned and copy fallback paths; source presence does not prove that direct GPU DMA is active or zero-copy in every deployed configuration.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY-CP/aerial-fh-driver/lib/gpu_mempool.cpp
+      - cuPHY-CP/aerial-fh-driver/lib/fronthaul.cpp
+      - cuPHY-CP/cuphydriver/src/uplink/order_cuda_kernels.cu
+      - cuPHY-CP/cuphydriver/src/uplink/order_entity.cpp
+    symbols:
+      - GpuMempool::GpuMempool
+      - Fronthaul::doca_gpu_setup
+      - order_kernel_doca
+      - OrderEntity::OrderEntity
+
+  - claim_id: AERIAL-FH-RT-001
+    question: Which packet-timing and failure mechanisms are visible in the frozen Aerial uplink fronthaul path?
+    statement: The frozen Aerial order path classifies packets as early, on-time or late against per-symbol timing thresholds, tracks dropped and lost PRBs, and exposes distinct no-packet and partial-packet timeout exits.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: These mechanisms establish observability and recovery branches, not achieved timing accuracy, acceptable timeout values or slot-deadline closure.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY-CP/cuphydriver/src/uplink/order_cuda_kernels.cu
+      - cuPHY-CP/cuphydriver/src/uplink/order_entity.cpp
+    symbols:
+      - order_kernel_cpu_init_comms_wait_packets
+      - calculate_slot_difference
+      - order_kernel_doca
+      - OrderEntity::cleanup
+
+  - claim_id: OAI-FH-001
+    question: How does the frozen OAI O-RAN 7.2 path deliver uplink slot data and expose timing failures?
+    statement: The frozen OAI source uses xRAN-managed per-antenna and per-symbol buffers and PRB maps, receives full-slot callbacks into a notified FIFO, reads slot IQ into gNB frequency-domain buffers, and reports early, late, corrupt, duplicate and protocol-specific drop counters.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This source-level path does not establish real-time performance, a specific xRAN build configuration, or the absence of platform-specific acceleration.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - radio/fhi_72/oaioran.c
+      - radio/fhi_72/oran-init.c
+      - radio/fhi_72/oran_isolate.c
+      - radio/fhi_72/armral_bfp_compression.c
+    symbols:
+      - oai_xran_fh_rx_callback
+      - print_fhi_counters
+      - oran_allocate_uplane_buffers
+      - oran_fh_if4p5_south_in
+      - armral_bfp_decompression
+
+  - claim_id: ORAN-DU-PHY-FH-001
+    question: Which fronthaul mechanisms are present in the frozen O-RAN SC O-DU Low reference?
+    statement: The frozen O-RAN SC O-DU Low repository contains xRAN receive and transmit processing, compression implementations, timing synchronization APIs, and FAPI/WLS worker components for a DU-low reference stack.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oran_du_phy
+    limitations: The reference repository is not a complete comparison target gNB and does not by itself establish the runtime data path used by Aerial, OAI or OCUDU.
+    status: confirmed
+    repository: oran_du_phy
+    commit: 6ef1d2b70db585e351b9cd35c6054c1b249a7465
+    paths:
+      - fhi_lib/lib/src/xran_rx_proc.c
+      - fhi_lib/lib/src/xran_tx_proc.c
+      - fhi_lib/lib/src/xran_compression.cpp
+      - fhi_lib/lib/src/xran_sync_api.c
+      - fapi_5g/source/framework/workers/nr5g_fapi_mac2phy_thread.c
+    symbols:
+      - xran_process_rx_sym
+      - xran_process_tx_sym
+      - xranlib_decompress
+      - xran_is_synchronized
+      - nr5g_fapi_mac2phy_thread_func
+
+  - claim_id: AERIAL-FH-SYNC-001
+    question: Which synchronization and real-time deployment requirements are documented for current Aerial fronthaul?
+    statement: NVIDIA's current documentation identifies IEEE 1588v2 PTP and SyncE LLS-C3 support and requires release builds, isolated CPU cores and PTP synchronization for real-time fronthaul applications.
+    conclusion_type: confirmed_fact
+    evidence_level: E1
+    projects:
+      - aerial
+    limitations: Documentation confirms supported features and prescribed setup, not measured phase error, holdover, failover time or deadline compliance in the local environment.
+    status: confirmed
+    official_url: https://docs.nvidia.com/aerial/cuda-accelerated-ran/latest/cubb/features_and_arch/features_for_5g_gnb.html
+    supporting_urls:
+      - https://docs.nvidia.com/aerial/framework/latest/developer_guide/real_time_apps.html
+    document_version: "26.1"
+    section: "Synchronization and Timing support; Real-Time System Requirements"
+    retrieved_at: 2026-07-21
