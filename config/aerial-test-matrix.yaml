@@ -1,0 +1,379 @@
+schema_version: 1
+protocol_version: "1.0"
+status: future_hardware_required
+scope: NR gNB only
+
+baseline:
+  repository: aerial
+  commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+  documentation_version: "26.1"
+  container_version: "26-1"
+  hardware_profile: gh200_bf3
+
+hardware_profiles:
+  gh200_bf3:
+    cpu: 72-core NVIDIA Grace CPU
+    gpu: NVIDIA H100 integrated in GH200
+    gpu_memory: 96 GB HBM3
+    nic: 2 x NVIDIA BlueField-3
+    ru_node: separate supported server with compatible NIC
+    timing: PTP plus SyncE where supported
+  gh200_bf3_mig_4g:
+    inherits: gh200_bf3
+    gpu_partition: MIG 4g.48gb
+    maximum_sms: 64
+
+global_defaults:
+  bandwidth_mhz: 100
+  scs_khz: 30
+  duplex: TDD
+  tdd_pattern: dddsuudddd
+  warmup_seconds: 30
+  duration_seconds: 120
+  repetitions: 5
+  latency_statistics: [p50, p95, p99, p99_9, maximum]
+  deadline_us: 500
+  power_sample_interval_ms: 100
+  clock_policy: locked_and_recorded
+  persistence_mode: enabled
+  ecc_policy: enabled_and_recorded
+  raw_root: data/performance/raw/aerial
+  evidence_kind: measured
+
+required_artifacts:
+  - machine_inventory.json
+  - software_manifest.json
+  - container_inspect.json
+  - gpu_nvidia_smi_q.txt
+  - gpu_clocks.csv
+  - nic_firmware.txt
+  - ptp_status.txt
+  - kernel_cmdline.txt
+  - cpu_affinity.txt
+  - test_config.yaml
+  - launch_command.txt
+  - application.log
+  - metrics.csv
+  - checksums.sha256
+
+e4_gate:
+  require_all_artifacts: true
+  require_exact_commit: true
+  require_exact_container_version: true
+  require_config_checksum: true
+  require_raw_log_checksum: true
+  require_successful_repetitions: matrix_required_repetitions
+  reject_if:
+    - thermal_throttling
+    - gpu_clock_drift
+    - ptp_unlocked
+    - unplanned_config_change
+    - missing_test_vector
+    - mixed_test_boundary
+
+nr_profiles:
+  nr_4t4r_peak:
+    tx_antennas: 4
+    rx_antennas: 4
+    dl_layers: 4
+    ul_layers: 2
+    load_model: peak
+    early_harq: false
+  nr_4t4r_average:
+    tx_antennas: 4
+    rx_antennas: 4
+    dl_layers: 4
+    ul_layers: 2
+    load_model: average
+    early_harq: false
+  nr_64t64r_early_harq:
+    tx_antennas: 64
+    rx_antennas: 64
+    dl_layers: 16
+    ul_layers: 4
+    load_model: peak
+    early_harq: true
+  nr_64t64r_full_ul:
+    tx_antennas: 64
+    rx_antennas: 64
+    dl_layers: 16
+    ul_layers: 8
+    load_model: peak
+    early_harq: false
+
+test_cases:
+  - id: AER-CUPHY-GRAPH-001
+    title: cuPHY CUDA Graph versus stream
+    boundary: layer1
+    runner: aerial_sdk/testBenches/perf/measure.py
+    profile: nr_4t4r_peak
+    factors:
+      graph_mode: [false, true]
+      cells: [1, 4, 8, 12, 16, 20]
+    fixed:
+      channels: [PRACH, PDCCH, PUCCH, PDSCH, PUSCH, SSB, CSIRS]
+      gpu_frequency_mhz: recorded_locked_max_supported
+      mps: enabled
+      iterations: 1
+    metrics:
+      - per_channel_latency_us
+      - slot_latency_us
+      - cuda_api_time_us
+      - kernel_time_us
+      - deadline_misses
+      - gpu_utilization_percent
+      - gpu_power_watts
+    success:
+      - output_buffer_present
+      - all_requested_cells_complete
+      - no_cuda_error
+
+  - id: AER-CUPHY-MMIMO-002
+    title: cuPHY 64T64R cell and layer scaling
+    boundary: layer1
+    runner: aerial_sdk/testBenches/perf/measure.py
+    profiles: [nr_64t64r_early_harq, nr_64t64r_full_ul]
+    factors:
+      cells: [1, 3, 6]
+      compression: [bfp9, modcomp]
+    fixed:
+      graph_mode: true
+      mps: enabled
+      srs: enabled
+    metrics:
+      - slot_latency_us
+      - srs_latency_us
+      - pusch_latency_us
+      - pdsch_latency_us
+      - deadline_misses
+      - hbm_bytes
+      - gpu_power_watts
+    success:
+      - all_layer_outputs_valid
+      - no_deadline_miss_during_measurement
+
+  - id: AER-CUMAC-4TR-003
+    title: cuMAC 4T4R CPU reference versus CUDA scheduler
+    boundary: algorithm
+    runner: frozen_cumac_standalone_testbench
+    profile: nr_4t4r_average
+    factors:
+      backend: [cpu_reference, cuda]
+      cells: [1, 4, 8, 12, 20, 40]
+      ues_per_cell: [8, 16, 32, 64]
+    fixed:
+      scheduler: proportional_fair_type_1
+      input_seed: 20260721
+      cuda_graph: recorded
+    metrics:
+      - scheduler_latency_us
+      - selected_ues
+      - allocated_prbs
+      - objective_value
+      - result_mismatch_count
+      - cpu_utilization_percent
+      - gpu_utilization_percent
+    success:
+      - result_mismatch_count_is_zero_or_explained_by_tie_break
+      - input_checksum_matches_between_backends
+
+  - id: AER-CUMAC-MMIMO-004
+    title: cuMAC 64T64R joint UE grouping and scheduling
+    boundary: algorithm
+    runner: frozen_cumac_64tr_testbench
+    profile: nr_64t64r_full_ul
+    factors:
+      backend: [cpu_reference, cuda]
+      cells: [1, 3, 6]
+      candidate_ues_per_cell: [16, 32, 64]
+      prg_count: [1, 4, 16]
+    fixed:
+      input_seed: 20260721
+      srs_channel_matrix: identical_between_backends
+    metrics:
+      - scheduler_latency_us
+      - grouping_latency_us
+      - beamforming_latency_us
+      - objective_value
+      - selected_layers
+      - result_mismatch_count
+    success:
+      - input_checksum_matches_between_backends
+      - output_constraints_satisfied
+
+  - id: AER-CUBB-E2E-005
+    title: cuBB eCPRI end-to-end cell scaling
+    boundary: end_to_end
+    runner: testBenches/phase4_test_scripts
+    profile: nr_4t4r_peak
+    factors:
+      cells: [1, 8, 20]
+      compression: [bfp9, modcomp]
+    fixed:
+      components: [testMAC, cuPHYController, RU_emulator]
+      physical_nodes: 2
+      gpudirect: enabled
+      cuda_graph: enabled
+      mig: disabled
+    metrics:
+      - aggregate_dl_mbps
+      - aggregate_ul_mbps
+      - slot_latency_us
+      - deadline_misses
+      - fh_on_time_percent
+      - fh_late_packets
+      - fh_early_packets
+      - bler
+      - gpu_power_watts
+      - system_power_watts
+    success:
+      - expected_fapi_messages_received
+      - transport_blocks_match_test_vectors
+      - fh_late_packets_is_zero
+      - fh_early_packets_is_zero
+
+  - id: AER-GDR-AB-006
+    title: GPUDirect versus host-staging counterfactual
+    boundary: distributed_unit
+    runner: cuphycontroller_plus_ru_emulator
+    profile: nr_4t4r_peak
+    factors:
+      data_path: [gpudirect_registered_gpu_memory, host_staging_copy]
+      cells: [1, 8]
+    fixed:
+      compression: bfp9
+      cuda_graph: enabled
+      mig: disabled
+    execution_rule:
+      gpudirect_registered_gpu_memory: use_frozen_default_gdr_path
+      host_staging_copy: use_predeclared_instrumented_patch_with_identical_packet_format
+      if_host_staging_path_absent: blocked_not_supported
+      prohibit_runtime_design_change: true
+    metrics:
+      - nic_to_phy_latency_us
+      - host_to_device_bytes
+      - device_to_host_bytes
+      - cpu_cycles
+      - slot_latency_us
+      - deadline_misses
+      - throughput_mbps
+    success:
+      - identical_iq_payload_checksum
+      - identical_fapi_result_checksum
+
+  - id: AER-MPS-AB-007
+    title: MPS scheduling impact
+    boundary: layer1
+    runner: aerial_sdk/testBenches/perf/measure.py
+    profile: nr_4t4r_peak
+    factors:
+      mps: [disabled, enabled]
+      cells: [1, 8, 20]
+    fixed:
+      graph_mode: true
+      gpu_partition: full_gpu
+      mps_sm_allocation_source: frozen_cuphycontroller_yaml
+    metrics:
+      - per_channel_latency_us
+      - slot_latency_us
+      - deadline_misses
+      - gpu_context_switches
+      - gpu_utilization_percent
+    success:
+      - no_cuda_error
+      - identical_test_vectors
+
+  - id: AER-MIG-AB-008
+    title: full GPU versus MIG resource isolation
+    boundary: end_to_end
+    runner: testBenches/phase4_test_scripts
+    profile: nr_4t4r_peak
+    factors:
+      gpu_partition: [full_gpu, mig_4g_48gb]
+      cells: [1, 4, 8]
+      co_tenant_load: [none, fixed_cuda_burn_25_percent]
+    fixed:
+      compression: bfp9
+      mps: enabled
+      mig_profile_id: 5
+      mig_maximum_sms: 64
+    metrics:
+      - slot_latency_us
+      - deadline_misses
+      - throughput_mbps
+      - gpu_utilization_percent
+      - gpu_memory_used_bytes
+      - interference_delta_percent
+    success:
+      - selected_mig_uuid_recorded
+      - mps_sm_values_do_not_exceed_64
+      - no_cross_partition_error
+
+  - id: AER-TAIL-009
+    title: sustained tail latency and thermal stability
+    boundary: end_to_end
+    runner: testBenches/phase4_test_scripts
+    profile: nr_4t4r_peak
+    overrides:
+      warmup_seconds: 300
+      duration_seconds: 1800
+      repetitions: 3
+    factors:
+      cells: [8, 20]
+    fixed:
+      compression: bfp9
+      gpudirect: enabled
+      cuda_graph: enabled
+      mig: disabled
+    metrics:
+      - slot_latency_us
+      - deadline_misses
+      - throughput_mbps
+      - gpu_temperature_celsius
+      - gpu_clock_mhz
+      - gpu_power_watts
+    success:
+      - no_thermal_throttling
+      - no_gpu_clock_drift
+      - ptp_locked_for_full_duration
+
+  - id: AER-FAULT-010
+    title: deterministic fronthaul and timing fault stress
+    boundary: end_to_end
+    runner: testBenches/phase4_test_scripts
+    profile: nr_4t4r_peak
+    factors:
+      fault:
+        - late_ul_packets_100us_for_100_slots
+        - early_ul_packets_100us_for_100_slots
+        - corrupt_ecpri_header_every_1000_packets
+        - ptp_source_loss_for_10_seconds
+        - primary_fh_port_down_for_10_seconds
+    fixed:
+      cells: 1
+      fault_start_seconds: 60
+      recovery_observation_seconds: 60
+      compression: bfp9
+    metrics:
+      - detection_latency_us
+      - dropped_slots
+      - error_indications
+      - recovery_time_ms
+      - process_crashes
+      - stale_output_count
+    success:
+      - process_crashes_is_zero
+      - no_silent_data_corruption
+      - documented_error_indication_observed
+
+execution_order:
+  - AER-CUPHY-GRAPH-001
+  - AER-CUPHY-MMIMO-002
+  - AER-CUMAC-4TR-003
+  - AER-CUMAC-MMIMO-004
+  - AER-MPS-AB-007
+  - AER-MIG-AB-008
+  - AER-CUBB-E2E-005
+  - AER-GDR-AB-006
+  - AER-TAIL-009
+  - AER-FAULT-010
