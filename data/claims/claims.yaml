@@ -387,3 +387,96 @@ claims:
       - srs_estimator_generic_impl::estimate
       - srs_channel_matrix
       - pdsch_modulator_impl::map
+
+  - claim_id: AERIAL-CUMAC-001
+    question: Which scheduler stages and coordination dimensions are implemented in the frozen cuMAC path?
+    statement: The frozen Aerial source aggregates per-cell slot requests into coordinated cell-group state and implements CUDA stages for UE selection, multi-cell PRG allocation, layer and MCS selection with OLLA, plus MU-MIMO grouping and beamforming, before returning per-cell scheduling responses.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Static source establishes the implemented stages and dimensions, not production configuration, end-to-end latency, scheduling quality or a speedup over CPU schedulers.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuMAC/src/api.h
+      - cuMAC-CP/src/cumac_cp_handler.cpp
+      - cuMAC/src/4T4R/multiCellUeSelection.cu
+      - cuMAC/src/4T4R/multiCellScheduler.cu
+      - cuMAC/src/4T4R/mcsSelectionLUT.cu
+      - cuMAC/src/64T64R/multiCellMuUeGrp.cu
+      - cuMAC/src/64T64R/multiCellBeamform.cu
+    symbols:
+      - sched_slot_data::init_slot_data
+      - cumac_cp_handler::cumac_task_callback
+      - multiCellUeSelKernel
+      - multiCellSchedulerKernel_svdMmseIrc
+      - mcsSelSinrRepKernel_type0_wbSinr
+      - multiCellMuUeGrpKernel_dl_dynPerTTI
+      - multiCellBeamformKernel_rzf_dl
+
+  - claim_id: AERIAL-CUMAC-BENCH-001
+    question: What repository-provided method exists for comparing cuMAC GPU and CPU scheduler implementations?
+    statement: The frozen repository provides CPU reference scheduler modules and examples that run corresponding GPU stages, synchronize their streams, validate scheduling solutions and compare CPU and GPU allocation results.
+    conclusion_type: confirmed_fact
+    evidence_level: E3
+    projects:
+      - aerial
+    limitations: The method was not executed because no NVIDIA GPU is available; example synchronization and local kernel timing boundaries are not equivalent to a production end-to-end slot benchmark.
+    status: confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    test_or_benchmark_path:
+      - cuMAC/examples/testBench.cpp
+      - cuMAC/examples/multiCellMuMimoScheduler/main.cpp
+      - cuMAC/src/4T4R/multiCellSchedulerCpu.cpp
+    configuration: Repository examples support CPU RR baseline or CPU multi-cell PF reference and a GPU pipeline; exact YAML/HDF5 workload, GPU device and build flags must be frozen before execution.
+    result_provenance: Static inspection of benchmark and reference source only; no local benchmark result or performance number was produced.
+
+  - claim_id: OAI-SCHED-001
+    question: How does the frozen OAI scheduler select and allocate NR downlink resources?
+    statement: The frozen OAI source builds per-UE candidates and exposes default policy stages for RI and PMI, time-domain allocation, beam selection, MCS selection and proportional-fair RB allocation, with retransmissions prioritized and VRB maps used for resource commitment.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - oai
+    limitations: This characterizes the selected default CPU policy path and does not cover every optional policy, slicing configuration or external scheduler integration.
+    status: confirmed
+    repository: oai
+    commit: 31ffb21a8204ae9706a88eb08606a80fc8eafb3e
+    paths:
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch_default_policies.c
+      - openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c
+    symbols:
+      - update_dlsch_buffer
+      - nr_dl_ri_pmi_select_default
+      - nr_dl_tda_select_default
+      - nr_dl_mcs_select_default
+      - nr_dl_proportional_fair
+      - get_best_ul_tda
+
+  - claim_id: OCUDU-SCHED-001
+    question: How does the frozen OCUDU scheduler organize UE policy and resource allocation?
+    statement: The frozen OCUDU source performs slice-aware retransmission and new-transmission scheduling, computes QoS and proportional-fair UE priorities from throughput history and estimated rates, and commits grants through a typed allocator that coordinates PDCCH, PDSCH or PUSCH and UCI resources with link adaptation and OLLA.
+    conclusion_type: confirmed_fact
+    evidence_level: E2
+    projects:
+      - ocudu
+    limitations: This describes the selected CPU scheduler path; it does not cover every policy configuration or establish comparative scheduling quality or runtime performance.
+    status: confirmed
+    repository: ocudu
+    commit: 6d44c2a5e5b2a81a4c67460b460ef99e789943cf
+    paths:
+      - lib/scheduler/ue_scheduling/intra_slice_scheduler.cpp
+      - lib/scheduler/policy/scheduler_time_qos.cpp
+      - lib/scheduler/ue_scheduling/ue_cell_grid_allocator.cpp
+      - lib/scheduler/support/outer_loop_link_adaptation.h
+    symbols:
+      - intra_slice_scheduler::dl_sched
+      - intra_slice_scheduler::ul_sched
+      - scheduler_time_qos::compute_ue_dl_priorities
+      - scheduler_time_qos::compute_ue_ul_priorities
+      - ue_cell_grid_allocator::allocate_dl_grant
+      - olla_algorithm::update
