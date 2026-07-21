@@ -585,3 +585,97 @@ claims:
     document_version: "26.1"
     section: "Synchronization and Timing support; Real-Time System Requirements"
     retrieved_at: 2026-07-21
+
+  - claim_id: AERIAL-SYNTH-001
+    question: Is Aerial primarily a collection of accelerated PHY kernels or a GPU-centric DU data path?
+    statement: The frozen source supports the inference that Aerial is a GPU-centric heterogeneous DU design because registered GPU fronthaul memory and packet ordering feed reusable cuPHY channel graphs, while GPU SRS tensors continue into cuMAC grouping and beamforming rather than forming isolated accelerator calls.
+    conclusion_type: inference
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: The continuous source-level path does not prove that every deployment uses direct GPU DMA, eliminates all host copies, meets deadlines or outperforms a CPU implementation.
+    status: partially_confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY-CP/aerial-fh-driver/lib/gpu_mempool.cpp
+      - cuPHY-CP/cuphydriver/src/uplink/order_cuda_kernels.cu
+      - cuPHY/src/cuphy_channels/pusch_rx.cpp
+      - cuMAC/src/64T64R/multiCellMuUeGrp.cu
+      - cuMAC/src/64T64R/multiCellBeamform.cu
+    symbols:
+      - GpuMempool::GpuMempool
+      - order_kernel_doca
+      - PuschRx::updateFullSlotGraph
+      - multiCellMuUeGrpKernel_dl_dynPerTTI
+      - multiCellBeamformKernel_rzf_dl
+
+  - claim_id: AERIAL-SYNTH-002
+    question: Does cuMAC only accelerate conventional CPU scheduling steps?
+    statement: The frozen source supports the inference that cuMAC combines acceleration of conventional proportional-fair, sorting and selection work with an expanded joint optimization space spanning cell groups, UEs, PRGs, layers, MCS, MU-MIMO grouping and beamforming.
+    conclusion_type: inference
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: Source structure establishes the dimensions and stages but not a superior objective value, runtime, fairness outcome or production configuration relative to OAI or OCUDU.
+    status: partially_confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuMAC-CP/src/cumac_cp_handler.cpp
+      - cuMAC/src/4T4R/multiCellUeSelection.cu
+      - cuMAC/src/4T4R/multiCellScheduler.cu
+      - cuMAC/src/4T4R/mcsSelectionLUT.cu
+      - cuMAC/src/64T64R/multiCellMuUeGrp.cu
+      - cuMAC/src/64T64R/multiCellBeamform.cu
+    symbols:
+      - cumac_cp_handler::cumac_task_callback
+      - multiCellUeSelKernel
+      - multiCellSchedulerKernel_svdMmseIrc
+      - mcsSelSinrRepKernel_type0_wbSinr
+      - multiCellMuUeGrpKernel_dl_dynPerTTI
+      - multiCellBeamformKernel_rzf_dl
+
+  - claim_id: AERIAL-SYNTH-003
+    question: Which Aerial differentiation remains specifically dependent on the NVIDIA platform?
+    statement: The frozen source supports the inference that algorithms such as batching, fusion and joint scheduling are conceptually portable, while the current CUDA graphs and kernels, CUDA external-memory registration, DOCA GPUNetIO packet path and MPS or MIG deployment mechanisms remain NVIDIA-platform-specific implementations.
+    conclusion_type: inference
+    evidence_level: E2
+    projects:
+      - aerial
+    limitations: This is a portability classification, not an estimate of rewrite effort, accelerator equivalence, vendor lock-in cost or achievable performance on another platform.
+    status: partially_confirmed
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    paths:
+      - cuPHY/src/cuphy_channels/pdsch_tx.cpp
+      - cuPHY/src/cuphy/dl_rate_matching/dl_rate_matching.cu
+      - cuPHY-CP/aerial-fh-driver/lib/gpu_mempool.cpp
+      - cuPHY-CP/aerial-fh-driver/lib/fronthaul.cpp
+      - cuMAC/src/4T4R/multiCellScheduler.cu
+    symbols:
+      - cuphyRunPdschTx
+      - fused_dl_rm_and_modulation
+      - GpuMempool::GpuMempool
+      - Fronthaul::doca_gpu_setup
+      - multiCellSchedulerKernel_svdMmseIrc
+
+  - claim_id: AERIAL-PERF-OPEN-001
+    question: What evidence is still required to claim an Aerial performance advantage over OAI or OCUDU?
+    statement: Repository cuMAC CPU and GPU reference methods plus the documented cuPHY performance harness define partial comparison methods, but equivalent hardware, NR configuration, test boundary, tail-latency, deadline, BLER, power and raw-log evidence remain absent, so no cross-project performance advantage is independently confirmed.
+    conclusion_type: open_question
+    evidence_level: E3
+    projects:
+      - aerial
+      - oai
+      - ocudu
+    limitations: This record identifies an unresolved comparison and does not contradict NVIDIA's vendor-specific validated configurations.
+    status: unverified
+    repository: aerial
+    commit: 29f5870fd84b0176df48b40667c1b8f1740e6d09
+    test_or_benchmark_path:
+      - cuMAC/examples/testBench.cpp
+      - cuMAC/examples/multiCellMuMimoScheduler/main.cpp
+      - cuMAC/src/4T4R/multiCellSchedulerCpu.cpp
+    configuration: The future protocol freezes 100 MHz NR profiles, graph and stream, CPU and CUDA scheduler, GPUDirect and host-staging, MPS, MIG, multi-cell, tail-latency and end-to-end boundaries with explicit repetition and evidence gates.
+    result_provenance: Static inspection of repository benchmark methods and the locally authored future hardware protocol only; no NVIDIA hardware result and no matched OAI or OCUDU result was produced.

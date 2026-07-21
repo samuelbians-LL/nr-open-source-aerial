@@ -21,3 +21,11 @@
 
 原始文档、日志和性能数据保存在 `data/`；外部仓库固定在 `third_party/` 且不纳入本仓库提交。
 
+## 主要交付物
+
+- [`reports/aerial-vs-open-ran-gnb.md`](reports/aerial-vs-open-ran-gnb.md)：14 章总体比较报告。
+- [`reports/aerial-cuda-differentiation.md`](reports/aerial-cuda-differentiation.md)：CUDA、数据路径、算法重构与反事实专题。
+- [`reports/scenario-decision-matrix.md`](reports/scenario-decision-matrix.md)：四类 NR gNB 场景的独立权重与选型建议。
+- [`reports/aerial-performance-claims-audit.md`](reports/aerial-performance-claims-audit.md)：NVIDIA 性能声明字段审计。
+- [`protocols/cpu-baseline.md`](protocols/cpu-baseline.md)：OAI/OCUDU 可重复 CPU 基准协议。
+- [`protocols/aerial-hardware-validation.md`](protocols/aerial-hardware-validation.md)：未来 Aerial 实机验证协议。
