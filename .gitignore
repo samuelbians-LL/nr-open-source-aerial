@@ -7,3 +7,17 @@ data/performance/raw/
 __pycache__/
 .pytest_cache/
 .venv/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets.*
+node_modules/
+venv/
+build/
+dist/
+*.log
